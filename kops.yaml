@@ -1,0 +1,157 @@
+apiVersion: kops.k8s.io/v1alpha2
+kind: Cluster
+metadata:
+  creationTimestamp: null
+  name: prosv.kr
+spec:
+  kubeProxy:
+    enabled: false
+    metricsBindAddress: 0.0.0.0
+  networking:
+    cilium:
+      enableNodePort: true
+      ipam: eni
+      hubble:
+        enabled: true
+  api:
+    dns: {}
+  authorization:
+    rbac: {}
+  channel: stable
+  cloudProvider: aws
+  certManager:
+    enabled: true
+  awsLoadBalancerController:
+    enabled: true
+  externalDns:
+    provider: external-dns
+  metricsServer:
+    enabled: true
+  kubeDNS:
+    provider: CoreDNS
+    nodeLocalDNS:
+      enabled: true
+      memoryRequest: 5Mi
+      cpuRequest: 25m
+  configBase: s3://jinwoong-k8s-s3/prosv.kr
+  etcdClusters:
+  - cpuRequest: 200m
+    etcdMembers:
+    - encryptedVolume: true
+      instanceGroup: control-plane-ap-northeast-2a
+      name: a
+    memoryRequest: 100Mi
+    name: main
+  - cpuRequest: 100m
+    etcdMembers:
+    - encryptedVolume: true
+      instanceGroup: control-plane-ap-northeast-2a
+      name: a
+    memoryRequest: 100Mi
+    name: events
+  iam:
+    allowContainerRegistry: true
+    legacy: false
+  kubelet:
+    anonymousAuth: false
+    maxPods: 100
+  kubernetesApiAccess:
+  - 0.0.0.0/0
+  - ::/0
+  kubernetesVersion: 1.24.11
+  masterPublicName: api.prosv.kr
+  networkCIDR: 172.30.0.0/16
+  nonMasqueradeCIDR: 100.64.0.0/10
+  sshAccess:
+  - 0.0.0.0/0
+  - ::/0
+  subnets:
+  - cidr: 172.30.32.0/19
+    name: ap-northeast-2a
+    type: Public
+    zone: ap-northeast-2a
+  - cidr: 172.30.64.0/19
+    name: ap-northeast-2c
+    type: Public
+    zone: ap-northeast-2c
+  topology:
+    dns:
+      type: Public
+    masters: public
+    nodes: public
+
+---
+
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: prosv.kr
+  name: control-plane-ap-northeast-2a
+spec:
+  image: 099720109477/ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20230302
+  instanceMetadata:
+    httpPutResponseHopLimit: 3
+    httpTokens: required
+  machineType: t3.medium
+  maxSize: 1
+  minSize: 1
+  role: Master
+  subnets:
+  - ap-northeast-2a
+
+---
+
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: prosv.kr
+  name: nodes-ap-northeast-2a
+spec:
+  image: 099720109477/ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20230302
+  instanceMetadata:
+    httpPutResponseHopLimit: 1
+    httpTokens: required
+  machineType: t3.medium
+  maxSize: 1
+  minSize: 1
+  role: Node
+  subnets:
+  - ap-northeast-2a
+
+---
+
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: prosv.kr
+  name: nodes-ap-northeast-2c
+spec:
+  image: 099720109477/ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-20230302
+  instanceMetadata:
+    httpPutResponseHopLimit: 1
+    httpTokens: required
+  machineType: t3.medium
+  maxSize: 1
+  minSize: 1
+  role: Node
+  subnets:
+  - ap-northeast-2c
+
+---
+
+apiVersion: kops.k8s.io/v1alpha2
+kind: SSHCredential
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: prosv.kr
+  name: admin
+spec:
+  publicKey: ssh-rsa AAA...
+    root@ip-172-31-50-160
